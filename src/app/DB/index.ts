@@ -7,7 +7,7 @@ const superAdminData = {
   name: "Super Admin",
   email: 'admin@gmail.com',
   password: '123456',
-  role: UserRoleEnum.SUPER_ADMIN,
+  role: [UserRoleEnum.SUPER_ADMIN],
   phone: '1234567890',
   verified: true,
   status: UserStatusEnum.ACTIVE,

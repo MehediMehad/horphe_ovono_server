@@ -24,6 +24,7 @@
     "@types/node": "^22.7.6",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^6.4.16",
+    "@types/nodemailer-smtp-transport": "^2.7.8",
     "@types/ws": "^8.5.13",
     "morgan": "^1.10.0",
     "prisma": "^5.22.0",

@@ -11,14 +11,6 @@ const loginUser = catchAsync(async (req, res) => {
     data: result,
   });
 });
-const registrationNewUser = catchAsync(async (req, res) => {
-  const result = await AuthServices.registrationNewUser(req.body);
-  sendResponse(res, {
-    statusCode: httpStatus.CREATED,
-    message: 'User created successfully',
-    data: result,
-  });
-});
 const forgotPassword = catchAsync(async (req, res) => {
   const result = await AuthServices.forgotPassword(req.body);
   sendResponse(res, {
@@ -64,7 +56,6 @@ const changePassword = catchAsync(async (req, res) => {
 
 export const AuthControllers = {
   loginUser,
-  registrationNewUser,
   forgotPassword,
   verifyOtpCode,
   resetPassword,

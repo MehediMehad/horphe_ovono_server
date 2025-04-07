@@ -5,6 +5,24 @@ import catchAsync from '../../helpers/catchAsync';
 import { Request, Response } from 'express';
 import pickValidFields from '../../utils/pickValidFields';
 
+const createNeeder = catchAsync(async (req, res) => {
+  const result = await UserServices.createNeeder(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    message: 'User created successfully',
+    data: result,
+  });
+});
+
+const createHelper = catchAsync(async (req, res) => {
+  const result = await UserServices.createHelper(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    message: 'User created successfully',
+    data: result,
+  });
+});
+
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const options = pickValidFields(req.query, ['limit', 'page', 'email']);
 
@@ -64,6 +82,8 @@ const updateUserRoleStatus = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const UserControllers = {
+  createNeeder,
+  createHelper,
   getAllUsers,
   getMyProfile,
   getUserDetails,

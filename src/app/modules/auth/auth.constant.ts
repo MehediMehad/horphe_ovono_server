@@ -18,10 +18,13 @@ export const saveOrUpdateOTP = async (email: string, otpCode: string, expiry: Da
     });
   };
 
-export const sendOTPEmail = async (email: string, otpCode: string) => {
-    await sentEmailUtility(
-      email,
-      "Verify Your Email",
-      emailText("Verify Your Email", otpCode)
-    );
-  };
+  /**
+ * Sends OTP email to a user.
+ */
+export const sendOTPEmail = async (email: string, otpCode: string): Promise<void> => {
+  const subject = 'Verify Your Email';
+  const htmlBody = emailText(subject, otpCode);
+  const textFallback = `Your OTP code is: ${otpCode}`;
+
+  await sentEmailUtility(email, subject, htmlBody, textFallback);
+};

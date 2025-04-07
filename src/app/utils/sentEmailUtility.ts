@@ -1,50 +1,49 @@
-import { env } from 'process';
 import config from '../config';
+import nodemailer from 'nodemailer';
+import smtpTransporter from 'nodemailer-smtp-transport';
 
-const nodemailer = require('nodemailer');
-const smtpTransporter = require('nodemailer-smtp-transport');
 interface Attachment {
   filename: string;
   content?: Buffer | string;
   path?: string;
   contentType: string;
 }
-let sentEmailUtility = async (
-  emailTo: string,
-  EmailSubject: string,
-  EmailHTML?: string, // HTML content as a parameter
-  EmailText?: string,
+
+/**
+ * Sends an email using configured SMTP transporter.
+ */
+const sentEmailUtility = async (
+  to: string,
+  subject: string,
+  htmlContent: string = '',
+  textContent: string = '',
   attachments?: Attachment[]
-) => {
-  let transporter = nodemailer.createTransport(
+): Promise<void> => {
+  const transporter = nodemailer.createTransport(
     smtpTransporter({
-      host: "mail.hasanmajedul.com", // FIXED: Removed ":2080"
-      // host: "smtp.google.com",
-      // service: 'smtp',
+      host: 'mail.hasanmajedul.com',
+      port: 465,
       secure: true,
-      port: 465, 
       auth: {
         user: config.emailSender.email,
         pass: config.emailSender.app_pass,
-        // user:"no-reply@hasanmajedul.com",
-        // pass: "Z&fd?sXblKr#",
       },
-       tls: {
-    rejectUnauthorized: false, // OPTIONAL: Bypass SSL issues (only if necessary)
-  },
+      tls: {
+        rejectUnauthorized: false,
+      },
     })
   );
 
-  let mailOption = {
+  const mailOptions = {
     from: 'no-reply@hasanmajedul.com',
-    to: emailTo,
-    subject: EmailSubject,
-    text: EmailText, // Optional: Add for plain text fallback
-    html: EmailHTML, // HTML content
+    to,
+    subject,
+    text: textContent,
+    html: htmlContent,
     attachments: attachments || [],
   };
 
-  return await transporter.sendMail(mailOption);
+  await transporter.sendMail(mailOptions);
 };
 
 export default sentEmailUtility;

@@ -8,61 +8,10 @@ import prisma from '../../config/prisma';
 import crypto from 'crypto'
 
 import sentEmailUtility from '../../utils/sentEmailUtility';
-import { emailText, emailText2 } from '../../utils/emailTemplate';
-import { User, UserStatusEnum } from '@prisma/client';
+import { emailText2 } from '../../utils/emailTemplate';
+import { UserStatusEnum } from '@prisma/client';
 import { jwtHelpers } from '../../helpers/jwtHelpers';
-import { generateOTP, saveOrUpdateOTP } from './auth.constant';
 
-const registrationNewUser = async (payload: User) => {
-  try {
-    // Validate payload here if needed
-    
-    const hash = await bcrypt.hash(
-      payload.password,
-      Number(config.bcrypt_salt_rounds)
-    );
-
-    const { otpCode, expiry, hexCode } = generateOTP();
-
-    const [userData, otp] = await prisma.$transaction(async (prisma) => {
-      const createUser = await prisma.user.create({
-        data: {
-          name: payload.name,
-          password: hash,
-          email: payload.email,
-          role: payload.role,
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-        }
-      });
-
-      const saveOTPToDatabase = await saveOrUpdateOTP(
-        createUser.email,
-        otpCode,
-        expiry,
-        hexCode,
-        prisma
-      );
-
-      return [createUser, saveOTPToDatabase];
-    });
-
-    return {
-      id: userData.id,
-      email: userData.email,
-      name: userData.name,
-      otpCode,
-      hexCode,
-    };
-  } catch (error) {
-    // Handle errors appropriately
-    throw error;
-  }
-};
 
 const loginUserFromDB = async (payload: {
   email: string;
@@ -148,7 +97,7 @@ const forgotPassword = async (payload: { email: string }) => {
     emailText2(otpCode)
   );
   return {
-    messageId: result.messageId,
+    messageId: "Reset Your Password",
     hexCode: userData.hexCode,
   };
 };
@@ -189,6 +138,7 @@ const verifyOtpCode = async (payload: {
       select: {
         id: true,
         email: true,
+        role: true,
       }
     }),
     prisma.otp.delete({
@@ -204,7 +154,9 @@ const verifyOtpCode = async (payload: {
   // Generate an access token
   const accessToken = jwtHelpers.generateToken(
     {
-      id: user.id
+      id: user.id,
+      email: user.email as string,
+      role: [...user.role]
     },
     config.jwt.reset_pass_secret as Secret,
     config.jwt.reset_pass_expires_in as string,
@@ -308,7 +260,6 @@ const changePassword = async (payload: {
 
 export const AuthServices = {
   loginUserFromDB,
-  registrationNewUser,
   forgotPassword,
   verifyOtpCode,
   resetPassword,

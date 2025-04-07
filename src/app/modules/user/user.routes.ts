@@ -1,14 +1,13 @@
 import express from 'express';
 import auth from '../../middlewares/auth';
-import validateRequest from '../../middlewares/validateRequest';
-import { UserValidations } from './user.validation';
 import { UserControllers } from './user.controller';
-// import parseBodyData from '../../../helpars/parseBodyData';
 import { UserRoleEnum as Role } from '@prisma/client';
 import { fileUploader } from '../../middlewares/fileUploader';
 import parseBodyData from '../../middlewares/parseBodyData';
 const router = express.Router();
 
+router.post('/create-needer', UserControllers.createNeeder);
+router.post('/create-helper', UserControllers.createHelper);
 router.get(
   '/',
   auth(Role.SUPER_ADMIN),

@@ -1,12 +1,131 @@
-import { User } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
-import prisma from '../../config/prisma';
-import ApiError from '../../errors/ApiError';
-import httpStatus from 'http-status';
-import sentEmailUtility from '../../utils/sentEmailUtility';
-import { IPaginationOptions } from '../../interface/pagination.type';
-import { paginationHelper } from '../../helpers/paginationHelper';
-// import { paginationHelper } from '../../../helpars/paginationHelper';
+import { User as User, UserRoleEnum } from "@prisma/client";
+import * as bcrypt from "bcrypt";
+import prisma from "../../config/prisma";
+import ApiError from "../../errors/ApiError";
+import httpStatus from "http-status";
+import { IPaginationOptions } from "../../interface/pagination.type";
+import { paginationHelper } from "../../helpers/paginationHelper";
+import config from "../../config";
+import {
+  generateOTP,
+  saveOrUpdateOTP,
+  sendOTPEmail,
+} from "../auth/auth.constant";
+
+const createNeeder = async (payload: User) => {
+  // if user already exists
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      email: payload.email,
+    },
+  });
+
+  if (existingUser) {
+    throw new ApiError(
+      httpStatus.CONFLICT,
+      "An account already exists with this email. Please try to log in or use a different email address."
+    );
+  }
+  const hash = await bcrypt.hash(
+    payload.password,
+    Number(config.bcrypt_salt_rounds)
+  );
+  const { otpCode, expiry, hexCode } = generateOTP();
+
+  const [userData, otp] = await prisma.$transaction(async (prisma) => {
+    const createUser = await prisma.user.create({
+      data: {
+        name: payload.name,
+        password: hash,
+        email: payload.email,
+        role: [UserRoleEnum.NEEDER],
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+      },
+    });
+
+    const saveOTPToDatabase = await saveOrUpdateOTP(
+      createUser.email,
+      otpCode,
+      expiry,
+      hexCode,
+      prisma
+    );
+
+    return [createUser, saveOTPToDatabase];
+  });
+
+  return {
+    id: userData.id,
+    email: userData.email,
+    name: userData.name,
+    role: userData.role,
+    otpCode,
+    hexCode,
+  };
+};
+const createHelper = async (payload: User) => {
+  // if user already exists
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      email: payload.email,
+    },
+  });
+
+  if (existingUser) {
+    throw new ApiError(
+      httpStatus.CONFLICT,
+      "An account already exists with this email. Please try to log in or use a different email address."
+    );
+  }
+  const hash = await bcrypt.hash(
+    payload.password,
+    Number(config.bcrypt_salt_rounds)
+  );
+  const { otpCode, expiry, hexCode } = generateOTP();
+
+  const [userData, otp] = await prisma.$transaction(async (prisma) => {
+    const createUser = await prisma.user.create({
+      data: {
+        name: payload.name,
+        password: hash,
+        email: payload.email,
+        role: [UserRoleEnum.NEEDER],
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+      },
+    });
+
+    const saveOTPToDatabase = await saveOrUpdateOTP(
+      createUser.email,
+      otpCode,
+      expiry,
+      hexCode,
+      prisma
+    );
+
+    return [createUser, saveOTPToDatabase];
+  });
+  // Send OTP via email (Outside transaction)
+  sendOTPEmail(userData.email, otpCode);
+
+  return {
+    id: userData.id,
+    email: userData.email,
+    name: userData.name,
+    role: userData.role,
+    otpCode,
+    hexCode,
+  };
+};
 
 const getAllUsersFromDB = async (
   options: IPaginationOptions & { email?: string }
@@ -15,11 +134,11 @@ const getAllUsersFromDB = async (
 
   const emailFilter: any = options.email
     ? {
-      email: {
-        contains: options.email, // Case-insensitive search
-        mode: 'insensitive',
-      },
-    }
+        email: {
+          contains: options.email, // Case-insensitive search
+          mode: "insensitive",
+        },
+      }
     : {};
 
   const [result, total, totalTerms] = await prisma.$transaction([
@@ -28,12 +147,12 @@ const getAllUsersFromDB = async (
       take: limit,
       where: {
         role: {
-          not: 'SUPER_ADMIN',
+          not: "SUPER_ADMIN",
         },
         ...emailFilter,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
       select: {
         id: true,
@@ -44,21 +163,18 @@ const getAllUsersFromDB = async (
         status: true,
         createdAt: true,
         updatedAt: true,
-
       },
     }),
     prisma.user.count({
       where: {
         role: {
-          not: 'SUPER_ADMIN',
+          not: "SUPER_ADMIN",
         },
         ...emailFilter,
       },
     }),
     prisma.terms.count({}),
   ]);
-
-
 
   return {
     data: result,
@@ -104,9 +220,6 @@ const getUserDetailsFromDB = async (id: string) => {
     },
   });
 
-
-
-
   return user;
 };
 
@@ -116,7 +229,7 @@ const updateMyProfileIntoDB = async (id: string, payload: any, file: any) => {
   });
 
   if (!existingUser) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'User not found');
+    throw new ApiError(httpStatus.BAD_REQUEST, "User not found");
   }
 
   // Handle profile image upload
@@ -159,6 +272,8 @@ const updateUserRoleStatusIntoDB = async (id: string, payload: any) => {
 };
 
 export const UserServices = {
+  createNeeder,
+  createHelper,
   getAllUsersFromDB,
   getMyProfileFromDB,
   getUserDetailsFromDB,
