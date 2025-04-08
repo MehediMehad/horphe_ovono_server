@@ -22,7 +22,9 @@ model User {
   gender         UserGenderEnum?
   dateOfBirth    DateTime?
   status         UserStatusEnum? @default(ACTIVE)
-  role           UserRoleEnum[] // Role of the user (e.g., SUPER_ADMIN, NEEDER, HELPER)
+  role           UserRoleEnum    // Role of the user (e.g., SUPER_ADMIN, NEEDER, HELPER)
+  isNeeder       Boolean         @default(false)
+  isHelper       Boolean         @default(false)
   verified       Boolean?        @default(false) // Indicates whether the user has verified their email or phone number
   isDeleted      Boolean         @default(false)
   fcmToken       String?
@@ -32,6 +34,7 @@ model User {
   // Relations
   notifications Notification[] // One-to-many relationship with Notification model
   userServices  UserService[] // Relation with UserService model
+  requests      Requests[]
 
   @@map("users")
 }
@@ -40,6 +43,7 @@ model Service {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
   name         String        @db.String
   userServices UserService[]
+  request      Requests[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -58,6 +62,21 @@ model UserService {
   @@map("user_services")
 }
 
+model Requests {
+  id             String            @id @default(uuid()) @map("_id") @db.ObjectId
+  serviceName    String
+  serviceDetails String
+  servicePrice   Int
+  image          String[]
+  address        String // Address of the service location
+  latitude       Float? 
+  longitude      Float?
+  status         RequestStatusEnum @default(PENDING)
+  userId         String            @db.ObjectId
+  user           User              @relation(fields: [userId], references: [id])
+  serviceId      String            @db.ObjectId
+  serviceType    Service           @relation(fields: [serviceId], references: [id])
+}
 model Otp {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
@@ -120,4 +139,12 @@ enum UserGenderEnum {
   Male
   Female
   Other
+}
+
+enum RequestStatusEnum {
+  PENDING // Request is still pending
+  APPROVED // Request has been approved
+  IN_PROGRESS // Request is currently being processed
+  COMPLETED // Request has been completed
+  STOP_REJECTED // Request has been rejected
 }

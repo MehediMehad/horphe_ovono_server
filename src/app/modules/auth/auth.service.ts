@@ -5,10 +5,7 @@ import config from "../../config";
 import AppError from "../../errors/ApiError";
 // import { generateResetPasswordToken, generateToken } from '../../helpers/generateToken';
 import prisma from "../../config/prisma";
-import crypto from "crypto";
 
-import sentEmailUtility from "../../utils/sentEmailUtility";
-import { emailText2 } from "../../utils/emailTemplate";
 import { UserStatusEnum } from "@prisma/client";
 import { jwtHelpers } from "../../helpers/jwtHelpers";
 import { generateOTP, saveOrUpdateOTP, sendOTPEmail } from "./auth.constant";
@@ -25,10 +22,14 @@ const loginUserFromDB = async (payload: {
     },
   });
 
+  if (!userData) {
+    throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+  }
+
   // Check if the password is correct
   const isCorrectPassword = await bcrypt.compare(
     payload.password,
-    userData.password as string
+    userData.password
   );
 
   if (!isCorrectPassword) {
@@ -82,7 +83,13 @@ const forgotPassword = async (payload: { email: string }) => {
   const { otpCode, expiry, hexCode } = generateOTP();
 
   // Create or Update OTP
-  const otpData =  await saveOrUpdateOTP(user.email, otpCode, expiry, hexCode, prisma)
+  const otpData = await saveOrUpdateOTP(
+    user.email,
+    otpCode,
+    expiry,
+    hexCode,
+    prisma
+  );
 
   // Send OTP Email
   sendOTPEmail(otpData.email, otpCode);
@@ -117,16 +124,20 @@ const verifyOtpCode = async (payload: { hexCode: string; otpCode: string }) => {
       "The OTP has expired. Please request a new one."
     );
   }
-  // If OTP is valid, delete the OTP from the database
-  const [user, record] = await prisma.$transaction([
+  // Perform multiple operations in a transaction
+  const [user, _] = await prisma.$transaction([
+    // First: Find the user based on OTP email
     prisma.user.findUnique({
       where: { email: otpRecord.email },
       select: {
         id: true,
         email: true,
         role: true,
+        verified: true,
       },
     }),
+
+    // Second: Delete OTP record from database
     prisma.otp.delete({
       where: {
         id: otpRecord.id,
@@ -134,25 +145,38 @@ const verifyOtpCode = async (payload: { hexCode: string; otpCode: string }) => {
     }),
   ]);
 
+  // Ensure the user is found
   if (!user) {
     throw new AppError(
       httpStatus.NOT_FOUND,
-      "User not found! user is possibly deleted by mistake please register"
+      "User not found! The user may have been deleted by mistake. Please register."
     );
   }
+
+  // Third: Update the user's verified status
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      verified: true,
+    },
+  });
+
   // Generate an access token
   const accessToken = jwtHelpers.generateToken(
     {
-      id: user.id,
-      email: user.email as string,
-      role: [...user.role],
+      id: updatedUser.id,
+      email: updatedUser.email as string,
+      role: [...updatedUser.role],
     },
     config.jwt.reset_pass_secret as Secret,
     config.jwt.reset_pass_expires_in as string
   );
-  // Hash the new password
+
   return { accessToken };
 };
+
 const resetPassword = async (
   userId: string,
   payload: {

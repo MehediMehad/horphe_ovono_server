@@ -12,8 +12,9 @@ import {
   sendOTPEmail,
 } from "../auth/auth.constant";
 
-const createNeeder = async (payload: User) => {
+const createNeeder = async (payload: User, file: any) => {
   // if user already exists
+  console.log({file});
   const existingUser = await prisma.user.findFirst({
     where: {
       email: payload.email,
@@ -38,7 +39,9 @@ const createNeeder = async (payload: User) => {
         name: payload.name,
         password: hash,
         email: payload.email,
-        role: [UserRoleEnum.NEEDER],
+        role: UserRoleEnum.NEEDER,
+        isNeeder: true,
+        profilePicture: file ? file.path : null,
       },
       select: {
         id: true,
@@ -97,13 +100,15 @@ const createHelper = async (payload: User) => {
         name: payload.name,
         password: hash,
         email: payload.email,
-        role: [UserRoleEnum.NEEDER],
+        role: UserRoleEnum.HELPER,
+        isHelper: true
       },
       select: {
         id: true,
         email: true,
         name: true,
         role: true,
+        isNeeder: true
       },
     });
 

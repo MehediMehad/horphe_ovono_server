@@ -6,7 +6,12 @@ import { Request, Response } from 'express';
 import pickValidFields from '../../utils/pickValidFields';
 
 const createNeeder = catchAsync(async (req, res) => {
-  const result = await UserServices.createNeeder(req.body);
+  const payload = req.body.bodyData;
+  const profileImage = req.file;
+  
+console.log(11, {payload}, {profileImage});
+  
+  const result = await UserServices.createNeeder(payload, profileImage);
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     message: 'User created successfully',
