@@ -59,13 +59,16 @@ const createNeeder = async (payload: User) => {
     return [createUser, saveOTPToDatabase];
   });
 
+  // Send OTP via email (Outside transaction)
+  sendOTPEmail(userData.email, otpCode);
+
   return {
     id: userData.id,
     email: userData.email,
     name: userData.name,
     role: userData.role,
-    otpCode,
     hexCode,
+    otpCode,
   };
 };
 const createHelper = async (payload: User) => {
@@ -122,8 +125,8 @@ const createHelper = async (payload: User) => {
     email: userData.email,
     name: userData.name,
     role: userData.role,
-    otpCode,
     hexCode,
+    otpCode,
   };
 };
 
