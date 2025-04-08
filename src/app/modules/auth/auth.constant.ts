@@ -10,11 +10,11 @@ export const generateOTP = () => {
   return { otpCode, expiry, hexCode };
 };
 
-export const saveOrUpdateOTP = async (email: string, otpCode: string, expiry: Date, identifier: string, prisma: any) => {
+export const saveOrUpdateOTP = async (email: string, otpCode: string, expiry: Date, hexCode: string, prisma: any) => {
     return await prisma.otp.upsert({
       where: { email },
-      update: { otp: otpCode, expiry, hexCode: identifier },
-      create: { email, otp: otpCode, expiry, hexCode: identifier },
+      update: { otp: otpCode, expiry, hexCode },
+      create: { email, otp: otpCode, expiry, hexCode },
     });
   };
 
