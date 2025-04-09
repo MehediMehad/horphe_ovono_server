@@ -6,11 +6,10 @@ const router = express.Router();
 
 router.post("/create",auth(UserRoleEnum.SUPER_ADMIN), ServiceControllers.createService);
 
-
-// router.put(
-//   "/update-user/:id",
-//   auth("ADMIN"),
-//   UserControllers.updateUserRoleStatus
-// );
+router.put(
+  "/change-status/:id",
+  auth("SUPER_ADMIN"),
+  ServiceControllers.changeServiceStatus
+);
 
 export const ServiceRouters = router;

@@ -20,7 +20,7 @@ router.get("/me", auth(), UserControllers.getMyProfile);
 router.get("/:id", auth(), UserControllers.getUserDetails);
 router.put(
   "/update-profile",
-  auth("USER", "ADMIN"),
+  auth("USER", "SUPER_ADMIN"),
   fileUploader.uploadProfileImage,
   parseBodyData,
   UserControllers.updateMyProfile
@@ -28,7 +28,7 @@ router.put(
 
 router.put(
   "/update-user/:id",
-  auth("ADMIN"),
+  auth("SUPER_ADMIN"),
   UserControllers.updateUserRoleStatus
 );
 

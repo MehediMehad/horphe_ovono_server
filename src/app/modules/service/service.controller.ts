@@ -15,8 +15,23 @@ const createService = catchAsync(async (req, res) => {
   });
 });
 
+const changeServiceStatus = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  console.log(6366, req.query);
+  
+    
+  const result = await ServiceServices.changeServiceStatus(id, req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: 'Change Service Status successfully',
+    data: result,
+  });
+});
+
+
 
 
 export const ServiceControllers = {
   createService,
+  changeServiceStatus
 };

@@ -22,7 +22,7 @@ model User {
   gender         UserGenderEnum?
   dateOfBirth    DateTime?
   status         UserStatusEnum? @default(ACTIVE)
-  role           UserRoleEnum    // Role of the user (e.g., SUPER_ADMIN, NEEDER, HELPER)
+  role           UserRoleEnum // Role of the user (e.g., SUPER_ADMIN, NEEDER, HELPER)
   isNeeder       Boolean         @default(false)
   isHelper       Boolean         @default(false)
   verified       Boolean?        @default(false) // Indicates whether the user has verified their email or phone number
@@ -40,12 +40,13 @@ model User {
 }
 
 model Service {
-  id           String        @id @default(auto()) @map("_id") @db.ObjectId
-  name         String        @db.String
+  id           String               @id @default(auto()) @map("_id") @db.ObjectId
+  name         String               @db.String
+  status    ServiceStatusEnum @default(AVAILABLE)
   userServices UserService[]
   request      Requests[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 
   @@map("services")
 }
@@ -69,7 +70,7 @@ model Requests {
   servicePrice   Int
   image          String[]
   address        String // Address of the service location
-  latitude       Float? 
+  latitude       Float?
   longitude      Float?
   status         RequestStatusEnum @default(PENDING)
   userId         String            @db.ObjectId
@@ -77,6 +78,7 @@ model Requests {
   serviceId      String            @db.ObjectId
   serviceType    Service           @relation(fields: [serviceId], references: [id])
 }
+
 model Otp {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
@@ -147,4 +149,9 @@ enum RequestStatusEnum {
   IN_PROGRESS // Request is currently being processed
   COMPLETED // Request has been completed
   STOP_REJECTED // Request has been rejected
+}
+
+enum ServiceStatusEnum {
+  AVAILABLE
+  UNAVAILABLE
 }

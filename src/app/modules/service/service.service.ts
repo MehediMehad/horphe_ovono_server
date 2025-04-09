@@ -17,10 +17,22 @@ const createService = async (payload: Service) => {
 
   return result
 
+};
+const changeServiceStatus = async (id: string, payload: { name: string }) => {
+  console.log(22, payload);
 
-
+  const result = await prisma.service.update({
+    where: {
+      id: id,
+    },
+    data: {
+      name: payload.name, 
+    },
+  });
+  return result;
 };
 
 export const ServiceServices = {
   createService,
+  changeServiceStatus
 };

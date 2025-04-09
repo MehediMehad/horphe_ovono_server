@@ -5,9 +5,9 @@ import httpStatus from 'http-status';
 import { jwtHelpers } from '../helpers/jwtHelpers';
 import ApiError from '../errors/ApiError';
 import prisma from '../config/prisma';
-import { UserStatusEnum } from '@prisma/client';
+import { UserRoleEnum, UserStatusEnum } from '@prisma/client';
 
-const auth = (...roles: string[]) => {
+const auth = (...roles: UserRoleEnum[]) => {
   return async (
     req: Request & { user?: any },
     res: Response,
